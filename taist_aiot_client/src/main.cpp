@@ -170,6 +170,7 @@ int AP_scan(bool *ssid_list) {
 bool AP_connect(int ap_idx, float *ftm_list, int *rssi_list) {
   WiFi.begin(AP_SSID_LIST[ap_idx], AP_PASSWD);
   while(WiFi.status() != WL_CONNECTED) {
+    digitalWrite(2, !digitalRead(2));
     delay(100);
   }
   Serial.printf("%s: ", AP_SSID_LIST[ap_idx]);
@@ -178,11 +179,15 @@ bool AP_connect(int ap_idx, float *ftm_list, int *rssi_list) {
       Serial.println("FTM Error: Initiate Session Failed");
       return false;
     }
-    xSemaphoreTake(ftmSemaphore, portMAX_DELAY) == pdPASS && ftmSuccess;
-    ftm_list[j] = tmp_ftm_value;
-    tmp_ftm_value = 0.0;
-    rssi_list[j] = WiFi.RSSI();
-    Serial.printf("%f/%d, ", ftm_list[j], rssi_list[j]);
+    if (xSemaphoreTake(ftmSemaphore, portMAX_DELAY) == pdPASS && ftmSuccess) {
+      ftm_list[j] = tmp_ftm_value;
+      tmp_ftm_value = 0.0;
+      rssi_list[j] = WiFi.RSSI();
+      Serial.printf("%f/%d, ", ftm_list[j], rssi_list[j]);
+    } else {
+      ftm_list[j] = 0.0;
+      rssi_list[j] = -100;
+    }
     delay(100);
   }
   Serial.println();
@@ -194,14 +199,19 @@ bool AP_connect(int ap_idx, float *ftm_list, int *rssi_list) {
 void onFtmReport(arduino_event_t *event) {
   const char *status_str[5] = {"SUCCESS", "UNSUPPORTED", "CONF_REJECTED", "NO_RESPONSE", "FAIL"};
   wifi_event_ftm_report_t *report = &event->event_info.wifi_ftm_report;
+  if (report == NULL) {
+    Serial.println("Error FTM");
+    ftmSuccess = false;
+    xSemaphoreGive(ftmSemaphore);   // Signal that report is received
+  }
   ftmSuccess = report->status == FTM_STATUS_SUCCESS;
   if (ftmSuccess) {
     tmp_ftm_value = (float)report->dist_est / 100.0;
-    free(report->ftm_report_data);
   } else {
-    Serial.print("FTM Error: ");
-    Serial.println(status_str[report->status]);
+    tmp_ftm_value = 0.0;
+    Serial.println("FTM Error: ");
   }
+  free(report->ftm_report_data);
   xSemaphoreGive(ftmSemaphore);   // Signal that report is received
 }
 
@@ -210,7 +220,8 @@ bool upload_data(int ap_idx, float *ftm_list, int *rssi_list) {
   Serial.println("Start uploading");
   WiFi.begin(WIFI_SSID, WIFI_PASSWD);
   while (WiFi.status() != WL_CONNECTED) {
-    delay(10);
+    digitalWrite(2, !digitalRead(2));
+    delay(100);
   }
   Serial.println("WiFi connected");
   // MQTT
