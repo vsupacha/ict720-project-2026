@@ -6,7 +6,7 @@
 
 // Change the SSID and PASSWORD
 const int AP_COUNT = 3;
-const char *AP_SSID_LIST[] = {"WiFi_AP_01", "WiFi_AP_02", "WiFi_AP_03"};
+const char *AP_SSID_LIST[] = {"01", "02", "03"};
 const char *AP_PASSWD = "taist_aiot";
 const int NUM_DATA = 10;
 
@@ -26,12 +26,12 @@ bool ftmSuccess = true; // Status of the received FTM Report
 volatile float tmp_ftm_value = 0.0;
 
 // Internet connectivity
-const char *WIFI_SSID = "HA_demo";          // SSID of AP that has FTM Enabled
-const char *WIFI_PASSWD = "home_assistant"; // STA Password
+const char *WIFI_SSID = "YOUR_HOTSPOT";          // SSID of AP that has FTM Enabled
+const char *WIFI_PASSWD = "YOUR_PASSWD"; // STA Password
 
 const char *MQTT_BROKER = "broker.emqx.io";
-const char *PUB_TOPIC = "taist/aiot/vsupacha/data";
-const char *SUB_TOPIC = "taist/aiot/vsupacha/cmd";
+const char *PUB_TOPIC = "taist/aiot/YOUR_TEAM/data";
+const char *SUB_TOPIC = "taist/aiot/YOUR_TEAM/cmd";
 
 void mqtt_callback(char* topic, byte* payload, unsigned int length);
 bool upload_data(int ap_idx, float *ftm_list, int *rssi_list);
@@ -102,7 +102,7 @@ void loop() {
         while (!ssid_list[ap_idx]) {
           ap_idx = (ap_idx + 1) % AP_COUNT;
         } 
-        pixel.setPixelColor(0, pixel.Color(0, 100, 100)); // VIOLET in connect
+        pixel.setPixelColor(0, pixel.Color(0, 100, 100)); // LIGHT BLUE in connect
         pixel.show();
         if (AP_connect(ap_idx, ftm_list, rssi_list)) {
           ready_idx = ap_idx;
@@ -186,7 +186,7 @@ bool AP_connect(int ap_idx, float *ftm_list, int *rssi_list) {
       Serial.printf("%f/%d, ", ftm_list[j], rssi_list[j]);
     } else {
       ftm_list[j] = 0.0;
-      rssi_list[j] = -100;
+      rssi_list[j] = WiFi.RSSI();
     }
     delay(100);
   }
@@ -232,9 +232,8 @@ bool upload_data(int ap_idx, float *ftm_list, int *rssi_list) {
   if (!mqttClient.connect(dev_id)) {
     return false;
   }
-  mqttClient.subscribe(SUB_TOPIC);
+  //mqttClient.subscribe(SUB_TOPIC);
   Serial.println("MQTT connected");
-  mqttClient.publish(PUB_TOPIC, "test");
   // JSON
   JsonDocument json_doc;
   char json_txt[256];
@@ -249,6 +248,7 @@ bool upload_data(int ap_idx, float *ftm_list, int *rssi_list) {
   mqttClient.loop();
   mqttClient.disconnect();
   Serial.println(json_txt);
+  delay(100);
   WiFi.disconnect();
   return true;
 }
