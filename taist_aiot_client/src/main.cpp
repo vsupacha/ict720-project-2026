@@ -6,7 +6,7 @@
 
 // Change the SSID and PASSWORD
 const int AP_COUNT = 3;
-const char *AP_SSID_LIST[] = {"01", "02", "03"};
+const char *AP_SSID_LIST[] = {"YOUR_AP_01", "YOUR_AP_02", "YOUR_AP_03"};
 const char *AP_PASSWD = "taist_aiot";
 const int NUM_DATA = 10;
 
@@ -17,7 +17,7 @@ bool ssid_list[AP_COUNT] = {false};
 
 // FTM measurement
 const uint8_t FTM_FRAME_COUNT = 16;
-const uint16_t FTM_BURST_PERIOD = 2;
+const uint16_t FTM_BURST_PERIOD = 3;
 
 void onFtmReport(arduino_event_t *event);
 
@@ -233,6 +233,7 @@ bool upload_data(int ap_idx, float *ftm_list, int *rssi_list) {
     return false;
   }
   //mqttClient.subscribe(SUB_TOPIC);
+  delay(500);
   Serial.println("MQTT connected");
   // JSON
   JsonDocument json_doc;
@@ -246,6 +247,7 @@ bool upload_data(int ap_idx, float *ftm_list, int *rssi_list) {
   serializeJson(json_doc, json_txt);
   mqttClient.publish(PUB_TOPIC, json_txt);
   mqttClient.loop();
+  delay(500);
   mqttClient.disconnect();
   Serial.println(json_txt);
   delay(100);
