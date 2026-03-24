@@ -1,0 +1,34 @@
+services:
+  data_hub:
+    build: ./data_hub
+    environment:
+      MQTT_BROKER: broker.emqx.io
+      DATA_TOPIC: taist/aiot/data
+      DB_URL: mongodb://admin:password@mongodb:27017 
+      DB_NAME: ftm_rssi_log
+    depends_on:
+      - mongodb
+  data_api:
+    build: ./data_api
+    ports: 
+      - "8000:8000"
+    environment:
+      AP_PREFIX: TAIST_
+      DB_URI: mongodb://admin:password@mongodb:27017 
+      DB_NAME: ftm_rssi_log
+    depends_on:
+      - mongodb
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+
+volumes:
+  mongo_data:
+    driver: local
