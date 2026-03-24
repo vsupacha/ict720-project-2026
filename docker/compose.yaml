@@ -4,8 +4,9 @@ services:
     environment:
       MQTT_BROKER: broker.emqx.io
       DATA_TOPIC: taist/aiot/data
-      DB_URL: mongodb://admin:password@mongodb:27017 
-      DB_NAME: ftm_rssi_log
+      DB_URI: mongodb://admin:password@mongodb:27017 
+      DB_NAME: ftm_rssi_db
+      DB_COL: ftm_rssi_col
     depends_on:
       - mongodb
   data_api:
@@ -15,7 +16,8 @@ services:
     environment:
       AP_PREFIX: TAIST_
       DB_URI: mongodb://admin:password@mongodb:27017 
-      DB_NAME: ftm_rssi_log
+      DB_NAME: ftm_rssi_db
+      DB_COL: ftm_rssi_col
     depends_on:
       - mongodb
   mongodb:
